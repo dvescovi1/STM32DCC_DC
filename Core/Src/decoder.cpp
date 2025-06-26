@@ -101,6 +101,6 @@ void decoder_main() {
   printf("\n\nBoot\n");
   for (;;) {
     decoder.execute();
-    HAL_Delay(5u);
+//    HAL_Delay(5u);
   }
 }
