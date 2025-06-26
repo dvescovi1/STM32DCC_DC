@@ -74,10 +74,10 @@ void bsp_write_red_led(bool on);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define TRACK_P_Pin GPIO_PIN_5
-#define TRACK_P_GPIO_Port GPIOE
-#define TRACK_N_Pin GPIO_PIN_6
+#define TRACK_N_Pin GPIO_PIN_5
 #define TRACK_N_GPIO_Port GPIOE
+#define TRACK_P_Pin GPIO_PIN_6
+#define TRACK_P_GPIO_Port GPIOE
 #define LD2_Pin GPIO_PIN_4
 #define LD2_GPIO_Port GPIOF
 #define LD1_Pin GPIO_PIN_0
@@ -86,12 +86,6 @@ void bsp_write_red_led(bool on);
 #define LD3_GPIO_Port GPIOG
 
 /* USER CODE BEGIN Private defines */
-// Track pins
-//#define TRACK_N_BS_Pos GPIO_BSRR_BS0_Pos
-//#define TRACK_N_BR_Pos GPIO_BSRR_BR0_Pos
-//#define TRACK_P_BS_Pos GPIO_BSRR_BS3_Pos
-//#define TRACK_P_BR_Pos GPIO_BSRR_BR3_Pos
-
 
 /* USER CODE END Private defines */
 
