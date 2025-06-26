@@ -1,7 +1,7 @@
 #include "decoder.hpp"
 #include <climits>
 #include <cstdio>
-//#include "bsp.h"
+
 #include "main.h"
 
 extern "C" void decoder_main(void);
@@ -53,7 +53,7 @@ bool Decoder::writeCv(uint32_t cv_addr, bool bit, uint32_t pos) {
 
 Decoder decoder;
 
-static uint32_t active_input_state = 0;
+//static uint32_t active_input_state = 0;
 
 
 extern "C" int _gettimeofday(struct timeval* ptimeval,
@@ -64,7 +64,7 @@ extern "C" int _gettimeofday(struct timeval* ptimeval,
   return 0;
 }
 
-
+#if 0
 extern "C" void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 {
     static uint32_t last_edge = 0;
@@ -79,34 +79,35 @@ extern "C" void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 
     }
 }
+#endif
 
-#if 0
 extern "C" void TIM15_IRQHandler() {
    // Get captured value
-  uint32_t ccr = HAL_TIM_ReadCapturedValue(&htim15, TIM_CHANNEL_1);
+  // Get captured value
+  uint32_t const ccr = LL_TIM_IC_GetCaptureCH1(TIM15);
 
-  HAL_TIM_IC_Stop(&htim15, TIM_CHANNEL_1);
+  // Toggle input TI1 and TI2
+  LL_TIM_CC_DisableChannel(TIM15, LL_TIM_CHANNEL_CH1);
+  LL_TIM_IC_SetActiveInput(
+    TIM15,
+    LL_TIM_CHANNEL_CH1,
+    LL_TIM_IC_GetActiveInput(TIM15, LL_TIM_CHANNEL_CH1) ==
+        LL_TIM_ACTIVEINPUT_DIRECTTI
+      ? LL_TIM_ACTIVEINPUT_INDIRECTTI
+      : LL_TIM_ACTIVEINPUT_DIRECTTI);
+  LL_TIM_CC_EnableChannel(TIM15, LL_TIM_CHANNEL_CH1);
 
-  TIM_IC_InitTypeDef sConfigIC;
-  sConfigIC.ICPolarity  = TIM_INPUTCHANNELPOLARITY_RISING; // Adjust if needed
-  sConfigIC.ICSelection = (active_input_state == 0) ? TIM_ICSELECTION_INDIRECTTI : TIM_ICSELECTION_DIRECTTI;
-  sConfigIC.ICPrescaler = TIM_ICPSC_DIV1;
-  sConfigIC.ICFilter    = 0;
-
-  HAL_TIM_IC_ConfigChannel(&htim15, &sConfigIC, TIM_CHANNEL_1);
-  HAL_TIM_IC_Start(&htim15, TIM_CHANNEL_1);
-
-  active_input_state ^= 1;  // Toggle between 0 and 1
-
+  // Subtract captured value from running counter
   __disable_irq();
-  __HAL_TIM_SET_COUNTER(&htim15, __HAL_TIM_GET_COUNTER(&htim15) - ccr);
+  LL_TIM_SetCounter(TIM15, LL_TIM_GetCounter(TIM15) - ccr);
   __enable_irq();
 
-  __HAL_TIM_CLEAR_FLAG(&htim15, TIM_FLAG_CC1);
+  // Clear capture/compare interrupt flag
+  while (LL_TIM_IsActiveFlag_CC1(TIM15)) LL_TIM_ClearFlag_CC1(TIM15);
   
   decoder.receive(ccr);
 }
-#endif
+
 
 #if 0
 extern "C" void TIM15_IRQHandler() {
@@ -136,9 +137,12 @@ extern "C" void TIM15_IRQHandler() {
 }
 #endif
 void decoder_main() {
-//  bsp_init_decoder();
   decoder.init();
-printf("SystemCoreClock = %lu Hz\r\n", SystemCoreClock);
+  printf("SystemCoreClock = %lu Hz\r\n", SystemCoreClock);
+
+#if defined(DEBUG)
+  SCB->CCR &= ~SCB_CCR_UNALIGN_TRP_Msk;
+#endif
 
   printf("\n\nBoot\n");
   for (;;) {
